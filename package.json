@@ -1,0 +1,9 @@
+{
+  "name": "small-big-demo-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A local demo game server and Small/Big history analyzer. Not connected to Dhani Win.",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=18" }
+}

@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Small/Big Demo Panel</title>
+<style>
+:root{font-family:system-ui,Arial,sans-serif;color:#172033;background:#f3f6fb}
+body{margin:0;padding:18px}.wrap{max-width:820px;margin:auto}
+header,.card{background:#fff;border-radius:16px;padding:18px;margin-bottom:14px;box-shadow:0 4px 18px #1b2b4a0d}
+h1{font-size:1.5rem;margin:0 0 6px}p{line-height:1.45}
+.notice{font-size:.9rem;color:#5a6476}
+button{border:0;border-radius:10px;padding:12px 15px;font-weight:700;cursor:pointer;margin:4px 6px 4px 0;background:#1e3a8a;color:white}
+button.secondary{background:#e6ecf7;color:#172033}
+.metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.metric{padding:14px;background:#f6f8fc;border-radius:12px}.metric strong{display:block;font-size:1.45rem}
+table{width:100%;border-collapse:collapse;font-size:.93rem}th,td{text-align:left;padding:10px 6px;border-bottom:1px solid #e8edf5}
+.pill{font-weight:800}.BIG{color:#b42318}.SMALL{color:#175cd3}
+code{overflow-wrap:anywhere}
+@media(max-width:520px){.metrics{grid-template-columns:1fr}.metric strong{font-size:1.2rem}}
+</style>
+</head>
+<body><main class="wrap">
+<header>
+<h1>🎮 Small/Big Demo Panel</h1>
+<p class="notice">Independent practice project. Not connected to Dhani Win and cannot access its private server.</p>
+<button id="newRound">Generate demo round</button>
+<button id="refresh" class="secondary">Refresh data</button>
+</header>
+<section class="card">
+<h2>Latest demo result</h2><div id="latest">Loading…</div>
+</section>
+<section class="card">
+<h2>History statistics</h2>
+<div class="metrics">
+<div class="metric">Rounds<strong id="rounds">—</strong></div>
+<div class="metric">Small<strong id="small">—</strong><span id="smallPct"></span></div>
+<div class="metric">Big<strong id="big">—</strong><span id="bigPct"></span></div>
+</div>
+<p class="notice">These percentages summarize demo history only. They are not predictions of future results.</p>
+</section>
+<section class="card">
+<h2>Recent rounds</h2>
+<div style="overflow-x:auto"><table><thead><tr><th>Period</th><th>Number</th><th>Result</th><th>Time</th></tr></thead><tbody id="rows"></tbody></table></div>
+</section>
+<section class="card">
+<h2>API endpoints</h2>
+<p><code>GET /api/result/latest</code></p>
+<p><code>GET /api/result/history?limit=20</code></p>
+<p><code>GET /api/stats</code></p>
+<p><code>POST /api/demo/round</code></p>
+</section>
+</main>
+<script>
+async function api(path, options){const r=await fetch(path,options);if(!r.ok)throw new Error("API request failed");return r.json()}
+async function refresh(){
+ try{
+  const [latest,stats,hist]=await Promise.all([api("/api/result/latest"),api("/api/stats"),api("/api/result/history?limit=20")]);
+  document.getElementById("latest").innerHTML=`<div class="metrics"><div class="metric">Period<strong>${latest.period}</strong></div><div class="metric">Number<strong>${latest.number}</strong></div><div class="metric">Result<strong class="pill ${latest.result}">${latest.result}</strong></div></div>`;
+  document.getElementById("rounds").textContent=stats.rounds;
+  document.getElementById("small").textContent=stats.small;
+  document.getElementById("big").textContent=stats.big;
+  document.getElementById("smallPct").textContent=stats.smallPercent+"% of history";
+  document.getElementById("bigPct").textContent=stats.bigPercent+"% of history";
+  document.getElementById("rows").innerHTML=hist.results.map(x=>`<tr><td>${x.period}</td><td>${x.number}</td><td class="pill ${x.result}">${x.result}</td><td>${new Date(x.createdAt).toLocaleTimeString()}</td></tr>`).join("");
+ }catch(e){document.getElementById("latest").textContent="Could not connect. Start the server first."}
+}
+document.getElementById("newRound").addEventListener("click",async()=>{try{await api("/api/demo/round",{method:"POST"});await refresh()}catch(e){alert("Start the server first.")}});
+document.getElementById("refresh").addEventListener("click",refresh);
+refresh();setInterval(refresh,10000);
+</script>
+</body></html>
